@@ -20,7 +20,7 @@ ASTPtr tryParseKQLQuery(
     const char * end,
     std::string & out_error_message,
     int * out_error_code,
-    bool hilite,
+    bool hilite,asdfasdfasdf
     const std::string & description,
     bool allow_multi_statements,
     size_t max_query_size,

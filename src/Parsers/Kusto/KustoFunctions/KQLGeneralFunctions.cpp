@@ -24,11 +24,6 @@
 #include <fmt/format.h>
 #include <stdexcept>
 
-namespace DB::ErrorCodes
-{
-extern const int SYNTAX_ERROR;
-}
-
 namespace DB
 {
 
