@@ -4213,12 +4213,6 @@ void StorageReplicatedMergeTree::mergeSelectingTask()
         /// (OPTIMIZE queries) can assign new merges.
         std::lock_guard merge_selecting_lock(merge_selecting_mutex);
 
-        /// Skip merge selection when merges are stopped (e.g. SYSTEM STOP MERGES).
-        /// Without this check, merge entries are created in ZooKeeper even though they cannot be executed,
-        /// and the source parts become "virtual" in the queue, which blocks TTL moves.
-        if (merger_mutator.merges_blocker.isCancelled())
-            return AttemptStatus::CannotSelect;
-
         auto zookeeper = getZooKeeperAndAssertNotStaticStorage();
         if (is_readonly)
         {
@@ -4272,7 +4266,11 @@ void StorageReplicatedMergeTree::mergeSelectingTask()
         if ((*storage_settings.get())[MergeTreeSetting::assign_part_uuids])
             future_merged_part->uuid = UUIDHelpers::generateV4();
 
-        bool can_assign_merge = max_source_parts_bytes_for_merge > 0;
+        /// Skip merge selection when merges are stopped (e.g. SYSTEM STOP MERGES).
+        /// Without this check, merge entries are created in ZooKeeper even though they cannot be executed,
+        /// and the source parts become "virtual" in the queue, which blocks TTL moves.
+        bool can_assign_merge = max_source_parts_bytes_for_merge > 0
+            && !merger_mutator.merges_blocker.isCancelled();
         PartitionIdsHint partitions_to_merge_in;
         if (can_assign_merge)
         {
