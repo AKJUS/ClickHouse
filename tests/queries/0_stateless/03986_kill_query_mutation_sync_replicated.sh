@@ -28,7 +28,7 @@ $CLICKHOUSE_CLIENT --query "
         id UInt64,
         value String
     )
-    ENGINE = ReplicatedMergeTree('/clickhouse/tables/${CLICKHOUSE_DATABASE}/t_kill_mutation', '1')
+    ENGINE = ReplicatedMergeTree('/clickhouse/tables/$CLICKHOUSE_TEST_ZOOKEEPER_PREFIX/t_kill_mutation', '1')
     ORDER BY id
 "
 
