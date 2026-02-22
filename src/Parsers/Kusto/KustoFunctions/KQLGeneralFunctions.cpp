@@ -115,8 +115,9 @@ bool BinAt::convertImpl(String & out, IParser::Pos & pos)
     String original_expr(pos->begin, pos->end);
 
     String expression_str = getConvertedArgument(fn_name, pos);
-    expression_str.erase(std::remove_if(expression_str.begin(), expression_str.end(), [](unsigned char c) { return std::isspace(c); }), expression_str.end());
-    if (expression_str.empty())
+    String expression_no_spaces = expression_str;
+    expression_no_spaces.erase(std::remove_if(expression_no_spaces.begin(), expression_no_spaces.end(), [](unsigned char c) { return std::isspace(c); }), expression_no_spaces.end());
+    if (expression_no_spaces.empty())
         return false;
 
     ++pos;
@@ -127,8 +128,9 @@ bool BinAt::convertImpl(String & out, IParser::Pos & pos)
 
     ++pos;
     String fixed_point_str = getConvertedArgument(fn_name, pos);
-    fixed_point_str.erase(std::remove_if(fixed_point_str.begin(), fixed_point_str.end(), [](unsigned char c) { return std::isspace(c); }), fixed_point_str.end());
-    if (fixed_point_str.empty())
+    String fixed_point_no_spaces = fixed_point_str;
+    fixed_point_no_spaces.erase(std::remove_if(fixed_point_no_spaces.begin(), fixed_point_no_spaces.end(), [](unsigned char c) { return std::isspace(c); }), fixed_point_no_spaces.end());
+    if (fixed_point_no_spaces.empty())
         return false;
 
     auto t1 = fmt::format("toFloat64({})", fixed_point_str);
