@@ -45,10 +45,9 @@ bool Bin::convertImpl(String & out, IParser::Pos & pos)
 
     ++pos;
     String round_to = getConvertedArgument(fn_name, pos);
+    round_to.erase(std::remove_if(round_to.begin(), round_to.end(), [](unsigned char c) { return std::isspace(c); }), round_to.end());
     if (round_to.empty())
         return false;
-
-    round_to.erase(std::remove_if(round_to.begin(), round_to.end(), [](unsigned char c) { return std::isspace(c); }), round_to.end());
 
     String value_no_spaces = value;
     value_no_spaces.erase(std::remove_if(value_no_spaces.begin(), value_no_spaces.end(), [](unsigned char c) { return std::isspace(c); }), value_no_spaces.end());
@@ -116,21 +115,21 @@ bool BinAt::convertImpl(String & out, IParser::Pos & pos)
     String original_expr(pos->begin, pos->end);
 
     String expression_str = getConvertedArgument(fn_name, pos);
+    expression_str.erase(std::remove_if(expression_str.begin(), expression_str.end(), [](unsigned char c) { return std::isspace(c); }), expression_str.end());
     if (expression_str.empty())
         return false;
-    expression_str.erase(std::remove_if(expression_str.begin(), expression_str.end(), [](unsigned char c) { return std::isspace(c); }), expression_str.end());
 
     ++pos;
     String bin_size_str = getConvertedArgument(fn_name, pos);
+    bin_size_str.erase(std::remove_if(bin_size_str.begin(), bin_size_str.end(), [](unsigned char c) { return std::isspace(c); }), bin_size_str.end());
     if (bin_size_str.empty())
         return false;
-    bin_size_str.erase(std::remove_if(bin_size_str.begin(), bin_size_str.end(), [](unsigned char c) { return std::isspace(c); }), bin_size_str.end());
 
     ++pos;
     String fixed_point_str = getConvertedArgument(fn_name, pos);
+    fixed_point_str.erase(std::remove_if(fixed_point_str.begin(), fixed_point_str.end(), [](unsigned char c) { return std::isspace(c); }), fixed_point_str.end());
     if (fixed_point_str.empty())
         return false;
-    fixed_point_str.erase(std::remove_if(fixed_point_str.begin(), fixed_point_str.end(), [](unsigned char c) { return std::isspace(c); }), fixed_point_str.end());
 
     auto t1 = fmt::format("toFloat64({})", fixed_point_str);
     auto t2 = fmt::format("toFloat64({})", expression_str);
@@ -142,7 +141,10 @@ bool BinAt::convertImpl(String & out, IParser::Pos & pos)
     }
     catch (const std::exception &)
     {
-        return false;
+        ParserKQLDateTypeTimespan time_span_parser;
+        if (!time_span_parser.parseConstKQLTimespan(bin_size_str))
+            return false;
+        bin_size = time_span_parser.toSeconds();
     }
 
     // validate if bin_size is a positive number
