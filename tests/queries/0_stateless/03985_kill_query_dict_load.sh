@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tags: no-fasttest
+# Tags: no-fasttest, no-sanitizers-lsan, long
 # Test that KILL QUERY works for queries blocked on dictionary loading.
 # Ref: https://github.com/ClickHouse/ClickHouse/issues/97559
 

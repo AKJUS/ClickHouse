@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tags: no-fasttest
+# Tags: no-fasttest, no-sanitizers-lsan, long
 # Test that KILL QUERY works for queries with WITH FILL generating huge ranges.
 # Ref: https://github.com/ClickHouse/ClickHouse/issues/97560
 
