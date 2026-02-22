@@ -11,9 +11,9 @@ query_id="kill_query_dict_load_${CLICKHOUSE_DATABASE}_$RANDOM"
 
 function wait_for_query_to_start()
 {
-    local timeout=60
+    local timeout=120
     local start=$EPOCHSECONDS
-    while [[ $($CLICKHOUSE_CLIENT --query "SELECT count() FROM system.processes WHERE query_id = '$1' SETTINGS use_query_cache = 0") == 0 ]]; do
+    while [[ $($CLICKHOUSE_CURL -sS "$CLICKHOUSE_URL" -d "SELECT count() FROM system.processes WHERE query_id = '$1' SETTINGS use_query_cache = 0") == 0 ]]; do
         if ((EPOCHSECONDS - start > timeout)); then
             echo "Timeout waiting for query to start" >&2
             exit 1
