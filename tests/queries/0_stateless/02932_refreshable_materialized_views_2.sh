@@ -126,6 +126,13 @@ while [ "`$CLICKHOUSE_CLIENT -q "select count() from dest -- $LINENO" | xargs`" 
 do
     sleep 0.5
 done
+# Stop auto-refreshes again before the final read+drop to avoid the same
+# atomic-exchange race (UNKNOWN_TABLE on dest during a concurrent refresh).
+$CLICKHOUSE_CLIENT -q "system stop view h;"
+while [ "`$CLICKHOUSE_CLIENT -q "select status from refreshes where view = 'h' -- $LINENO" | xargs`" != 'Disabled' ]
+do
+    sleep 0.5
+done
 $CLICKHOUSE_CLIENT -q "
     select '<31: to existing table>', * from dest;
     drop table dest;
@@ -141,7 +148,7 @@ $CLICKHOUSE_CLIENT -q "
     insert into src2 values (1);
     exchange tables src and src2;
     drop table src2;"
-while [ "`$CLICKHOUSE_CLIENT -nq "select status, retry from refreshes -- $LINENO" | xargs`" != 'Scheduled 0' ]
+while [ "`$CLICKHOUSE_CLIENT -nq "select status, retry from refreshes where view = 'h2' -- $LINENO" | xargs`" != 'Scheduled 0' ]
 do
     sleep 0.5
 done
