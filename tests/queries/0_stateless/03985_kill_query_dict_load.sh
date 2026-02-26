@@ -11,7 +11,7 @@ query_id="kill_query_dict_load_${CLICKHOUSE_DATABASE}_$RANDOM"
 
 function wait_for_query_to_start()
 {
-    local timeout=120
+    local timeout=30
     local start=$EPOCHSECONDS
     while [[ $($CLICKHOUSE_CURL -sS "$CLICKHOUSE_URL" -d "SELECT count() FROM system.processes WHERE query_id = '$1' SETTINGS use_query_cache = 0") == 0 ]]; do
         if ((EPOCHSECONDS - start > timeout)); then
@@ -42,11 +42,12 @@ $CLICKHOUSE_CLIENT --query_id="$query_id" --query "
 
 wait_for_query_to_start "$query_id"
 
-$CLICKHOUSE_CLIENT --query "KILL QUERY WHERE query_id = '$query_id' SYNC" >/dev/null
+# Use async KILL (without SYNC) to avoid blocking if propagation is slow.
+$CLICKHOUSE_CURL -sS "$CLICKHOUSE_URL" -d "KILL QUERY WHERE query_id = '$query_id'" >/dev/null
 
 wait
 
-$CLICKHOUSE_CLIENT --query "SYSTEM RELOAD DICTIONARY ${CLICKHOUSE_DATABASE}.slow_dict" >/dev/null 2>&1 || true
-$CLICKHOUSE_CLIENT --query "DROP DICTIONARY IF EXISTS ${CLICKHOUSE_DATABASE}.slow_dict"
+$CLICKHOUSE_CURL -sS "$CLICKHOUSE_URL" -d "SYSTEM RELOAD DICTIONARY ${CLICKHOUSE_DATABASE}.slow_dict" >/dev/null 2>&1 || true
+$CLICKHOUSE_CURL -sS "$CLICKHOUSE_URL" -d "DROP DICTIONARY IF EXISTS ${CLICKHOUSE_DATABASE}.slow_dict"
 
 echo "OK"

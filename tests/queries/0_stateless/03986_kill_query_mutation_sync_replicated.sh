@@ -11,7 +11,7 @@ query_id="kill_query_mutation_sync_${CLICKHOUSE_DATABASE}_$RANDOM"
 
 function wait_for_query_to_start()
 {
-    local timeout=120
+    local timeout=30
     local start=$EPOCHSECONDS
     while [[ $($CLICKHOUSE_CURL -sS "$CLICKHOUSE_URL" -d "SELECT count() FROM system.processes WHERE query_id = '$1' SETTINGS use_query_cache = 0") == 0 ]]; do
         if ((EPOCHSECONDS - start > timeout)); then
@@ -44,12 +44,16 @@ $CLICKHOUSE_CLIENT --query_id="$query_id" --query "
 
 wait_for_query_to_start "$query_id"
 
-$CLICKHOUSE_CLIENT --query "KILL QUERY WHERE query_id = '$query_id' SYNC" >/dev/null
+# Use async KILL (without SYNC) to avoid blocking if propagation is slow.
+# The background ALTER client will exit when the server sends back the cancellation error.
+$CLICKHOUSE_CURL -sS "$CLICKHOUSE_URL" -d "KILL QUERY WHERE query_id = '$query_id'" >/dev/null
 
+# Kill the mutation immediately so it stops consuming resources in the background.
+$CLICKHOUSE_CURL -sS "$CLICKHOUSE_URL" -d "KILL MUTATION WHERE database = '${CLICKHOUSE_DATABASE}' AND table = 't_kill_mutation'" >/dev/null 2>&1 || true
+
+# Wait for the ALTER client to finish (should exit promptly after the kill).
 wait
 
-# Clean up: kill the mutation itself so it doesn't keep running
-$CLICKHOUSE_CLIENT --query "KILL MUTATION WHERE database = '${CLICKHOUSE_DATABASE}' AND table = 't_kill_mutation'" >/dev/null 2>&1 || true
-$CLICKHOUSE_CLIENT --query "DROP TABLE IF EXISTS ${CLICKHOUSE_DATABASE}.t_kill_mutation SYNC"
+$CLICKHOUSE_CURL -sS "$CLICKHOUSE_URL" -d "DROP TABLE IF EXISTS ${CLICKHOUSE_DATABASE}.t_kill_mutation SYNC"
 
 echo "OK"
