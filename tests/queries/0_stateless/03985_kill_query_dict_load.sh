@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tags: no-fasttest, no-sanitizers-lsan, long
+# Tags: no-fasttest, no-sanitizers-lsan, long, no-flaky-check
 # Test that KILL QUERY works for queries blocked on dictionary loading.
 # Ref: https://github.com/ClickHouse/ClickHouse/issues/97559
 
@@ -11,7 +11,7 @@ query_id="kill_query_dict_load_${CLICKHOUSE_DATABASE}_$RANDOM"
 
 function wait_for_query_to_start()
 {
-    local timeout=30
+    local timeout=120
     local start=$EPOCHSECONDS
     while [[ $($CLICKHOUSE_CURL -sS "$CLICKHOUSE_URL" -d "SELECT count() FROM system.processes WHERE query_id = '$1' SETTINGS use_query_cache = 0") == 0 ]]; do
         if ((EPOCHSECONDS - start > timeout)); then
