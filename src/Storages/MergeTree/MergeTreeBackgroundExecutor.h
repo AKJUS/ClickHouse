@@ -86,9 +86,10 @@ struct TaskRuntimeData
     TaskProfileEvents events;
     /// Guarded by MergeTreeBackgroundExecutor<>::mutex
     bool is_currently_deleting{false};
-    /// Actually autoreset=false is needed only for unit test
-    /// where multiple threads could remove tasks corresponding to the same storage
-    /// This scenario in not possible in reality.
+    /// autoreset=false allows multiple threads to wait concurrently on the same task.
+    /// This happens when two concurrent DROP DATABASE queries both call
+    /// flushAndPrepareForShutdown() -> BackgroundJobsAssignee::finish() ->
+    /// removeTasksCorrespondingToStorage() for the same storage.
     Poco::Event is_done{/*autoreset=*/false};
     /// This is equal to task->getPriority() not to do useless virtual calls in comparator
     Priority priority;
