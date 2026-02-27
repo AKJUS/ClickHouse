@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tags: no-fasttest, no-sanitizers-lsan, long, no-flaky-check
+# Tags: no-fasttest, no-sanitizers-lsan, long
 # Test that KILL QUERY works for queries blocked on dictionary loading.
 # Ref: https://github.com/ClickHouse/ClickHouse/issues/97559
 
@@ -32,7 +32,7 @@ $CLICKHOUSE_CLIENT --query "
     PRIMARY KEY id
     SOURCE(CLICKHOUSE(QUERY 'SELECT number AS id, toString(number) AS value FROM system.numbers'))
     LIFETIME(0)
-    LAYOUT(FLAT())
+    LAYOUT(HASHED())
 "
 
 # This query will block waiting for the dictionary to load (which will never finish).

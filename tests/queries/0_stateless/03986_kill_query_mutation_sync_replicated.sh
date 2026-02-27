@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tags: replica, zookeeper, no-fasttest, no-sanitizers-lsan, long, no-flaky-check
+# Tags: replica, zookeeper, no-fasttest, no-sanitizers-lsan, long
 # Test that KILL QUERY works for ALTER DELETE with mutations_sync=1 on ReplicatedMergeTree.
 # Ref: https://github.com/ClickHouse/ClickHouse/issues/97535
 
@@ -39,7 +39,7 @@ $CLICKHOUSE_CLIENT --query "INSERT INTO ${CLICKHOUSE_DATABASE}.t_kill_mutation S
 # waiting for the mutation to complete.
 $CLICKHOUSE_CLIENT --query_id="$query_id" --query "
     ALTER TABLE ${CLICKHOUSE_DATABASE}.t_kill_mutation DELETE WHERE id IN (SELECT number FROM system.numbers)
-    SETTINGS mutations_sync = 1
+    SETTINGS mutations_sync = 1, allow_nondeterministic_mutations = 1
 " >/dev/null 2>&1 &
 
 wait_for_query_to_start "$query_id"
