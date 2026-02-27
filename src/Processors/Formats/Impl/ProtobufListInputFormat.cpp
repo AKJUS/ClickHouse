@@ -44,7 +44,7 @@ void ProtobufListInputFormat::setReadBuffer(ReadBuffer & in_)
 void ProtobufListInputFormat::resetParser()
 {
     IRowInputFormat::resetParser();
-    serializer->reset();
+    (*serializer).reset();
 }
 
 bool ProtobufListInputFormat::readRow(MutableColumns & columns, RowReadExtension & row_read_extension)
