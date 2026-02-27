@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Tags: no-fasttest, long
 
-# Test that concurrent MOVE PARTITION operations between the same pair of tables
-# in opposite directions (A->B and B->A) do not deadlock due to lock ordering
-# on operation_with_data_parts_mutex.
+# Test that concurrent partition operations between the same pair of tables
+# in opposite directions do not deadlock due to lock ordering.
+# Covers MOVE PARTITION, ATTACH PARTITION FROM, and REPLACE PARTITION FROM.
 
 set -e
 
@@ -45,6 +45,42 @@ function move_thread_backward()
     done
 }
 
+function attach_thread_forward()
+{
+    local TIMELIMIT=$((SECONDS+TIMEOUT))
+    while [ $SECONDS -lt "$TIMELIMIT" ]
+    do
+        $CLICKHOUSE_CLIENT --query="ALTER TABLE t1 ATTACH PARTITION 1 FROM t2"
+    done
+}
+
+function attach_thread_backward()
+{
+    local TIMELIMIT=$((SECONDS+TIMEOUT))
+    while [ $SECONDS -lt "$TIMELIMIT" ]
+    do
+        $CLICKHOUSE_CLIENT --query="ALTER TABLE t2 ATTACH PARTITION 1 FROM t1"
+    done
+}
+
+function replace_thread_forward()
+{
+    local TIMELIMIT=$((SECONDS+TIMEOUT))
+    while [ $SECONDS -lt "$TIMELIMIT" ]
+    do
+        $CLICKHOUSE_CLIENT --query="ALTER TABLE t1 REPLACE PARTITION 1 FROM t2"
+    done
+}
+
+function replace_thread_backward()
+{
+    local TIMELIMIT=$((SECONDS+TIMEOUT))
+    while [ $SECONDS -lt "$TIMELIMIT" ]
+    do
+        $CLICKHOUSE_CLIENT --query="ALTER TABLE t2 REPLACE PARTITION 1 FROM t1"
+    done
+}
+
 TIMEOUT=10
 
 insert_thread t1 2>/dev/null &
@@ -53,6 +89,10 @@ move_thread_forward 2>/dev/null &
 move_thread_forward 2>/dev/null &
 move_thread_backward 2>/dev/null &
 move_thread_backward 2>/dev/null &
+attach_thread_forward 2>/dev/null &
+attach_thread_backward 2>/dev/null &
+replace_thread_forward 2>/dev/null &
+replace_thread_backward 2>/dev/null &
 
 wait
 
