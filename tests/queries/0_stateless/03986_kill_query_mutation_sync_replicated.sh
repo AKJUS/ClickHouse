@@ -21,11 +21,13 @@ $CLICKHOUSE_CLIENT --query "
 
 $CLICKHOUSE_CLIENT --query "INSERT INTO ${CLICKHOUSE_DATABASE}.t_kill_mutation SELECT number, toString(number) FROM numbers(100)"
 
-# This ALTER DELETE with a subquery from system.numbers will never finish because
-# the mutation reads an infinite stream. With mutations_sync=1 the query blocks
+# This ALTER DELETE uses sleepEachRow to make the mutation take a very long time
+# (100 rows * 3 seconds = ~300 seconds) without consuming significant memory.
+# The condition is always false (sleepEachRow returns 0), so no rows are deleted,
+# but the mutation still scans every row. With mutations_sync=1 the query blocks
 # waiting for the mutation to complete.
 $CLICKHOUSE_CLIENT --query_id="$query_id" --query "
-    ALTER TABLE ${CLICKHOUSE_DATABASE}.t_kill_mutation DELETE WHERE id IN (SELECT number FROM system.numbers)
+    ALTER TABLE ${CLICKHOUSE_DATABASE}.t_kill_mutation DELETE WHERE sleepEachRow(3) = 1
     SETTINGS mutations_sync = 1, allow_nondeterministic_mutations = 1
 " >/dev/null 2>&1 &
 
