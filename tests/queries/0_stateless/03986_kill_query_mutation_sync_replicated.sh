@@ -9,19 +9,6 @@ CURDIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 query_id="kill_query_mutation_sync_${CLICKHOUSE_DATABASE}_$RANDOM"
 
-function wait_for_query_to_start()
-{
-    local timeout=120
-    local start=$EPOCHSECONDS
-    while [[ $($CLICKHOUSE_CURL -sS "$CLICKHOUSE_URL" -d "SELECT count() FROM system.processes WHERE query_id = '$1' SETTINGS use_query_cache = 0") == 0 ]]; do
-        if ((EPOCHSECONDS - start > timeout)); then
-            echo "Timeout waiting for query to start" >&2
-            exit 1
-        fi
-        sleep 0.1
-    done
-}
-
 $CLICKHOUSE_CLIENT --query "
     CREATE TABLE ${CLICKHOUSE_DATABASE}.t_kill_mutation
     (
